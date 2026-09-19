@@ -616,6 +616,11 @@
 #define USE_YMIN_PLUG
 #define USE_ZMIN_PLUG
 //#define USE_XMAX_PLUG
+
+// JGMaker Magic V1.1: X-S endstop is physically wired to D2 (PE4), not D3 as in standard RAMPS.
+// Override the pins_RAMPS.h default (X_MIN_PIN=3) before it is included.
+#define X_MIN_PIN 2
+
 //#define USE_YMAX_PLUG
 //#define USE_ZMAX_PLUG
 
@@ -881,6 +886,10 @@
  */
 #define Z_PROBE_SERVO_NR 0       // Defaults to SERVO 0 connector. Default: commented out - CNorton
 #define Z_SERVO_ANGLES { 10, 90 } // Z Servo Deploy and Stow angles Default: commented out - CNorton
+
+// JGMaker Magic V1.1: J1-S (BLTouch servo signal) is physically wired to D3 (PE5).
+// Override the pins_RAMPS.h default (SERVO0_PIN=15/Y+) before it is included.
+#define SERVO0_PIN 3
 
 /**
  * The BLTouch probe uses a Hall effect sensor and emulates a servo.

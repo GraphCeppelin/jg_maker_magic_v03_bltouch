@@ -1,0 +1,45 @@
+# ---- Local / tooling artifacts (not for the fork) ----
+
+# Arduino/PlatformIO build tree
+Marlin/applet/
+Marlin/.piorecipes/
+Marlin/.pio/
+build/
+*.o
+*.d
+*.elf
+*.bin
+*.eep
+*.lst
+
+# Standard Arduino IDE library that accidentally landed here
+Marlin/src/libs/Tone.cpp
+Marlin/src/libs/Tone.h
+
+# Flash backup (machine-specific binary snapshot)
+FLASH_backup_*.hex
+
+# Local diagnostic scripts & logs (session-scoped, not part of the fork)
+*.py
+*.ps1
+*.log
+opencheck.*
+probe_*.log
+probe_*.ps1
+read_avrconf.py
+hexparse.py
+fuse_math.py
+analyze_*.py
+find_strings.py
+HANDSHAKE_log_*.txt
+
+# Editors
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Scratch / local-only images (already promoted into docs/)
+New folder/
+*.avif

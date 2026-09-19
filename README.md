@@ -3,6 +3,32 @@
 ***
 
 Modified Marlin firmware and adds the ability to use the BLTouch or clones on the JGMaker Magic 3D Printer.
+
+> **Fork maintained by:** [GraphCeppelin](https://github.com/GraphCeppelin/jg_maker_magic_v03_bltouch) — targeted at the **JG Maker Magic V1.1** with a **3D Touch (BLTouch clone)** probe. See [`docs/`](docs/) for the full technical & flashing reports and the wiring / Marlin configuration screenshots.
+
+## [0.3.5] — JG Maker Magic V1.1 + 3D Touch (BLTouch)
+
+This fork extends the original 0.3.4 firmware for the **JG Maker Magic V1.1** board. The key additions (all in [`Marlin/Configuration.h`](Marlin/Configuration.h)):
+
+| Override | Value | Why |
+|---|---|---|
+| `X_MIN_PIN` | `2` | On Magic V1.1 the X-S endstop is physically wired to **D2 (PE4)**, not D3 as in standard RAMPS. |
+| `SERVO0_PIN` | `3` | J1-S (BLTouch servo signal) is wired to **D3 (PE5)**, not the default Y+. |
+| `Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN` | on | Z probe shares the Z-min endstop pin. |
+| `Z_PROBE_SERVO_NR` | `0` | Servo 0 connector for the 3D Touch. |
+
+Wire colours (3-pin): **Green = GND → J1-G**, **Red = +5 V → J1-V**, **Orange = Signal → J1-S**.
+Wire colours (2-pin): **Black = GND → Z-G**, **White = Zmin → Z-S**.
+
+### Documentation
+
+- [`docs/BLTOUCH/BLTOUCH_REPORT.md`](docs/BLTOUCH/BLTOUCH_REPORT.md) — full sensor spec, wiring, pin map, Marlin trace.
+- [`docs/BLTOUCH/M401_DIAGNOSTIC_REPORT.md`](docs/BLTOUCH/M401_DIAGNOSTIC_REPORT.md) — M401 instability diagnosis (no firmware changes, no config changes).
+- [`docs/BLTOUCH/REPORT_bltouch_v1.1.md`](docs/BLTOUCH/REPORT_bltouch_v1.1.md) — integration stage report.
+- [`docs/BLTOUCH/REPORT_FINAL.md`](docs/BLTOUCH/REPORT_FINAL.md) — final integration checklist.
+- [`docs/FLASHING/`](docs/FLASHING/) — USB flashing, handshake, byte-by-byte verification, 5-stage backup analysis, avrdude instructions.
+- [`docs/BLTOUCH/images/`](docs/BLTOUCH/images/) — sensor photo, 3D Touch parameter/dimension sheet, and the step-by-step Marlin configuration screenshots.
+
 ### Latest change
 
 ****
