@@ -295,7 +295,7 @@ sudo mkdir -p /etc/avrdude && sudo cp /etc/avrdude.conf /etc/avrdude/avrdude.con
 |---|---|
 | `REPORT_usb_flashing.md` | **СОЗДАН** (этот файл) |
 | `REPORT_bltouch_v1.1.md` | создан ранее, не тронут |
-| `Marlin/Configuration.h` | изменён ранее (X_MIN_PIN=2, SERVO0_PIN=3) — **в этой сессии НЕ тронут** |
+| `Marlin/Configuration.h` | **изменён 2026-09-21** (актуально: override `X_MIN_PIN 2` удалён → D3; `SERVO0_PIN` = **19 (REAL WIRE, D19, разъём Z+ — жёлтый)**; добавлен `FIL_RUNOUT_PIN 4`; `X_MIN_ENDSTOP_INVERTING true`) |
 | `Marlin/src/pins/ramps/pins_RAMPS.h` | **НЕ изменён** |
 | `Marlin/Makefile` | **НЕ изменён** |
 | `Marlin/src/libs/Tone.cpp` | **НЕ изменён** |

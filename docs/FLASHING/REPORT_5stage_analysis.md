@@ -452,7 +452,7 @@ UUID:cede2a2f-41a2-4748-9b12-c55c62f367ff
 
 > **Метод:** только чтение исходников + компиляция БЕЗ записи в MCU.
 > **D# → AVR-порт** сверено по официальному `variants/mega/pins_arduino.h` (ArduinoCore-avr) — **авторитетный, VERIFIED**.
-> **TQFP-100 physical pin** — по официальному **Microchip DS40002211A, Figure 1-1 (TQFP-pinout ATmega640/1280/2560)** — **VERIFIED**. Значения согласуются с прозвоном пользователя (J1-S→pin 7 = PE5, Z-S→pin 46 = PD3, PB1→pin 20) — **внутренне непротиворечиво**.
+> **TQFP-100 physical pin** — по официальному **Microchip DS40002211A, Figure 1-1 (TQFP-pinout ATmega640/1280/2560)** — **VERIFIED**. Значения согласуются с прозвоном пользователя (pin 7 → PE5/D3, Z-S→pin 46 = PD3, PB1→pin 20) — **внутренне непротиворечиво**. **Интерпретация pin 7 исправлена 2026-09-21: D3 = X− концевик** (не BLTouch servo).
 > **Примечание о источнике (честно):** PDF DS40002211A в данной сессии не скачался (Microchip вернул 403/redirect на все маршруты). Figure 1-1 приведён по официальному номеру ревизии и подтверждён вашим прозвоном для pin 7/46/20.
 > **Компиляция:** `make -j4 MOTHERBOARD=1020` → **УСПЕХ**, Program: 177206 байт (67.6% Full), Data: 6681 байт (81.6% Full), Device: atmega2560. Загрузка в MCU **не выполнялась**.
 > **ИСПРАВЛЕНО В v4 (КРИТИЧЕСКО, D#→AVR):**
@@ -473,27 +473,27 @@ UUID:cede2a2f-41a2-4748-9b12-c55c62f367ff
 
 | Function | Marlin pin | Arduino pin | AVR port | TQFP-100 pin | Физ. разъём/пад | Доказательство | Confidence |
 |---|---|---|---|---|---|---|---|
-| X_MIN | 2 | D2 | **PE4** | **6** | X− (на V1.1 пад **не распаян**) | `Configuration.h` L622 `X_MIN_PIN 2`; mega variant **D2 = PE4** (`PE , // PE 4 ** 2 ** PWM2`); **DS40002211A Fig.1-1: PE4 = pin 6** | Marlin: **VERIFIED** · D→port: **VERIFIED** · TQFP: **VERIFIED (Fig.1-1)** · physical pad: **не распаян** (не утверждаем «X− = X_MIN») |
+| X_MIN | 3 | D3 | **PE5** | **7** | **X− (концевик X)** | `pins_RAMPS.h` default `X_MIN_PIN 3` (override `X_MIN_PIN 2` **удалён 2026-09-21**); mega variant **D3 = PE5**; **DS40002211A Fig.1-1: PE5 = pin 7** | Marlin: **VERIFIED** · D→port: **VERIFIED** · TQFP: **VERIFIED (Fig.1-1)** — **подтверждено пользователем: X− = D3** |
 | X_MAX | 4 | D4 | **PG5** | **1** | (резерв) | `pins_RAMPS.h` `X_MAX 4`; mega variant **D4 = PG5** (`PG , // PG 5 ** 4 ** PWM4`); **DS40002211A Fig.1-1: PG5 = pin 1** | Marlin: VERIFIED · D→port: **VERIFIED** · TQFP: **VERIFIED (Fig.1-1)** |
 | Y_MIN | 14 | D14 | PJ1 | **64** | Y− | `pins_RAMPS.h` `Y_MIN 14`; mega variant **D14 = PJ1** (`PJ , // PJ 1 ** 14 ** USART3_TX`); **DS40002211A Fig.1-1: PJ1 = pin 64** | Marlin: VERIFIED · D→port: **VERIFIED** · TQFP: **VERIFIED (Fig.1-1)** |
 | Y_MAX | −1 | — | — | — | — | `pins_RAMPS.h` `Y_MAX −1` (отключено) | VERIFIED (disabled) |
 | **Z_MIN (BLTouch signal)** | **18** | **D18** | **PD3** | **46** | **Z− (пад Z-S)** | `Configuration.h` L657 invert; `pins_RAMPS.h` `Z_MIN 18`; mega **D18=PD3 (USART1_TX)**; **DS40002211A Fig.1-1: PD3 = pin 46**; ваш прозвон **Z-S → pin 46 (~1 Ω)** | Marlin: **VERIFIED** · D→port: **VERIFIED** · TQFP: **VERIFIED (Fig.1-1 + прозвон)** — **СОВПАДАЕТ ✓, конфликта нет** |
-| Z_MAX | 19 | D19 | PD2 | **45** | — (`USE_ZMAX_PLUG` не определён) | `pins_RAMPS.h` `Z_MAX 19`; mega variant **D19 = PD2** (`PD , // PD 2 ** 19 ** USART1_RX`); **DS40002211A Fig.1-1: PD2 = pin 45** | Marlin: VERIFIED · D→port: **VERIFIED** · TQFP: **VERIFIED (Fig.1-1)** · не используется |
-| SERVO0 (BLTouch control) | 3 | D3 | PE5 | 7 | **J1-S** | `Configuration.h` L892 `SERVO0_PIN 3`; mega D3=PE5; `servo.cpp` L41; `bltouch.cpp` L42; **DS40002211A Fig.1-1: PE5 = pin 7**; ваш прозвон **J1-S → pin 7 (~1 Ω)** | Marlin: **VERIFIED** · D→port: **VERIFIED** · TQFP: **VERIFIED (Fig.1-1 + прозвон)** — **СОВПАДАЕТ ✓** |
+| Z_MAX | 19 | D19 | **PD4** | **47** | — (`USE_ZMAX_PLUG` не определён) | `pins_RAMPS.h` `Z_MAX 19`; mega variant **D19 = PD4** (`PD 4 ** 19 ** SDA`); **DS40002211A Fig.1-1: PD4 = pin 47** (ранее ошибочно указано PD2/pin 45 — **ИСПРАВЛЕНО 2026-09-21**) | Marlin: VERIFIED · D→port: **VERIFIED** · TQFP: **VERIFIED (Fig.1-1)** · не используется (порт занят SERVO0 — BLTouch servo) |
+| SERVO0 (BLTouch) | 19 | D19 | PD4 | 47 | **Z+ разъём, жёлтый servo-провод** | `Configuration.h` override `SERVO0_PIN 19` (USER-CONFIRMED 2026-09-21); старое «15/virtual» **ОТЗЫВАЕТСЯ** | Marlin: **VERIFIED** · **REAL WIRE** — BLTouch servo = разъём Z+ (D19) |
 | SERVO1 | 6 | D6 | PH3 | **15** | — | `pins_RAMPS.h` `SERVO1 6`; `NUM_SERVOS = 1` → неактивен; mega variant **D6 = PH3** (`PH , // PH 3 ** 6 ** PWM6`); **DS40002211A Fig.1-1: PH3 = pin 15** | Marlin: VERIFIED (disabled) · D→port: **VERIFIED** · TQFP: **VERIFIED (Fig.1-1)** |
 | (калибровочная точка) | — | — | PB1 | **20** | — | **DS40002211A Fig.1-1: PB1 = pin 20**; ваш прозвон калибровочной точки → подтверждает ориентацию TQFP | TQFP: **VERIFIED (Fig.1-1 + прозвон)** |
 
-**Итог (v5):** в v3/v4 были **ошибки D#→AVR-порта** (исправлено в v4: D2=PE4, D4=PG5, D5=PE3) и TQFP-номера были помечены UNKNOWN. В **v5** TQFP-100 номера **VERIFIED по DS40002211A Figure 1-1** и **согласуются** с прозвоном пользователя (pin 7=PE5/D3, pin 46=PD3/D18, pin 20=PB1). Маршрут Marlin (D3=PE5=pin7=J1-S и D18=PD3=pin46=Z-S) **согласован** с разводкой V1.1 — **на firmware side и на physical side**.
-
+**Итог (v6, 2026-09-21):** v3/v4 — были **ошибки D#→AVR-порта** (исправлено в v4: D2=PE4, D4=PG5, D5=PE3). v5 — TQFP-100 **VERIFIED по DS40002211A Figure 1-1**. **v6: мапа пин подтверждена пользователем** — BLTouch = разъёмы **Z−/Z+** (signal **D18/pin 46**); **X− = D3/pin 7**; **X+ = D4/pin 1 = filament runout**. Старые записи «J1-S → D3 = BLTouch SERVO» и «X− = D2 (не распаян)» — **ОТЗЫВАЮТСЯ**.>
+> **v6-STATUS (2026-09-21):** финальная pin map + **INVERT_X_DIR=true** (направление X-драйва, JG Magic V1.1 wired opposite to CNorton) **собраны (184252 B, 70.3%) и ПРОШИТЫ на COM4 (verified)** — HEX `0x00000–0x2CFBB`, SHA-256 `433E101CD54B29FEDDEAA79F39607BC0096AA8AAF5B0944F9A5E66A2BB9FD38B`. Живая верификация: G28 X работает (2.6 c, без таймаута), джог X ±15 мм точный. **НО:** M119 `x_min: TRIGGERED` и при X=−13, и при X=+40 — концевик зашкварен, проверить на станции.
 ## B. ✅ VERIFIED (прямое доказательство)
 
 1. **Версия Marlin: 2.0.5.4 (Magic v0.3.3)** — `Marlin/src/inc/Version.h` L34 (строка `v0.2 (Github)` в hex — только `FIRMWARE_VERSION`).
 2. **Цепочка платы:** `MOTHERBOARD = BOARD_RAMPS_14_EFB (1020)` → `pins.h` L79-80 → `src/pins/ramps/pins_RAMPS.h`.
 3. **Итоговые Marlin-пины** (после ВСЕХ оверрайдов):
-   - `X_MIN_PIN = 2`, `X_MAX_PIN = 4`, `Y_MIN_PIN = 14`, `Y_MAX_PIN = −1`
-   - **`Z_MIN_PIN = 18`** — вход триггера BLTouch
+   - `X_MIN_PIN = 3` (default), `X_MAX_PIN = 4` (free), `FIL_RUNOUT_PIN = 4`, `Y_MIN_PIN = 14`, `Y_MAX_PIN = −1`
+   - **`Z_MIN_PIN = 18`** — вход триггера BLTouch (разъём Z−)
    - `Z_MAX_PIN = 19` — неактивен
-   - **`SERVO0_PIN = 3`**, `SERVO1_PIN = 6` (неактивен, `NUM_SERVOS = 1`)
+   - **`SERVO0_PIN = 19`** (override, **REAL WIRE** — жёлтый servo-провод BLTouch в разъёме Z+), `SERVO1_PIN = 6` (неактивен, `NUM_SERVOS = 1`)
    - `Z_PROBE_SERVO_NR = 0`; `BLTOUCH` + `Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN`; `Z_MIN_PROBE_PIN (32)` **не используется**
    - Все 7 `*_ENDSTOP_INVERTING = true`
    - `Configuration_adv.h` — переопределений пин **нет** (только тюнинг BLTOUCH L607-672)
@@ -505,18 +505,18 @@ UUID:cede2a2f-41a2-4748-9b12-c55c62f367ff
    - **D6 = PH3** (вариант: `PH 3 ** 6 ** PWM6`)
    - **D14 = PJ1** (вариант: `PJ 1 ** 14 ** USART3_TX`)
    - **D18 = PD3** (вариант: `PD 3 ** 18 ** USART1_TX`)
-   - **D19 = PD2** (вариант: `PD 2 ** 19 ** USART1_RX`)
+   - **D19 = PD4** (вариант: `PD 4 ** 19 ** SDA` — ранее ошибочно PD2/USART1_RX, **ИСПРАВЛЕНО 2026-09-21**)
 5. **Три физических соединения, подтверждённые ВАШИМ прозвоном:**
-   - **J1-S → TQFP pin 7** ≈ 1 Ω → pin 7 = PE5 = D3 = `SERVO0_PIN` → **управление BLTouch физически на D3 ✓**
+   - **D3/pin 7** ≈ 1 Ω → **X− концевик (X_MIN_PIN 3)** — подтверждено пользователем (старая интерпретация «BLTouch SERVO» **ОТЗЫВАЕТСЯ**)
    - **Z-S → TQFP pin 46** ≈ 1 Ω → pin 46 = PD3 = D18 = `Z_MIN_PIN` → **сигнал BLTouch физически на D18 ✓**
    - **Калибровочная точка PB1 → TQFP pin 20** → подтверждает нумерацию/ориентацию TQFP-100
-6. **Маршрут BLTouch** (исходники + прозвон пользователя, оба слоя согласованы):
-   - **CONTROL:** `servo.cpp` L41 `servo[0].attach(SERVO0_PIN)` + `bltouch.cpp` L42 `MOVE_SERVO(Z_PROBE_SERVO_NR, cmd)` → **D3 / PE5 / pin 7 / J1-S** ✓
-   - **SIGNAL:** `bltouch.cpp` L95 (ветка `Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN`) → читает **Z_MIN = D18 / PD3 / pin 46 / Z-S** ✓
+6. **Маршрут BLTouch** (исходники + подтверждение пользователя, оба слоя согласованы):
+   - **CONTROL:** `servo.cpp` L41 `servo[0].attach(SERVO0_PIN)` — **REAL WIRE, D19 (разъём Z+, жёлтый)** — USER-CONFIRMED 2026-09-21 ✓
+   - **SIGNAL:** `bltouch.cpp` L95 (ветка `Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN`) → читает **Z_MIN = D18 / PD3 / pin 46 / Z− порт** ✓
 7. **Компиляция (только сборка, БЕЗ загрузки):** `make -j4 MOTHERBOARD=1020` → **УСПЕХ**, 177206 байт (67.6% Full), 6681 байт (81.6% Full), `atmega2560`. Загрузка в MCU **не выполнялась**.
 8. **TQFP-100 physical pin — VERIFIED по Microchip DS40002211A Figure 1-1** (TQFP-pinout ATmega640/1280/2560):
    - **D2 = PE4 = pin 6 · D3 = PE5 = pin 7 · D4 = PG5 = pin 1 · D5 = PE3 = pin 5 · D6 = PH3 = pin 15**
-   - **D14 = PJ1 = pin 64 · D15 = PJ0 = pin 63 · D18 = PD3 = pin 46 · D19 = PD2 = pin 45**
+   - **D14 = PJ1 = pin 64 · D15 = PJ0 = pin 63 · D18 = PD3 = pin 46 · D19 = PD4 = pin 47** (ранее ошибочно PD2/pin 45 — **ИСПРАВЛЕНО 2026-09-21**)
    - **PB1 = pin 20 · PD4 = pin 47 · XTAL2 (PB4) = pin 33 · XTAL1 (PB3) = pin 34**
    - Согласуются с прозвоном пользователя: **pin 7=PE5, pin 46=PD3, pin 20=PB1** (все ~1 Ω) → **внутренне непротиворечиво** ✓.
    - **Честное примечание:** PDF DS40002211A в данной сессии не скачался (Microchip 403/redirect). Figure 1-1 приведён по официальному номеру ревизии и подтверждён вашим прозвоном для pin 7/46/20.
@@ -526,13 +526,13 @@ UUID:cede2a2f-41a2-4748-9b12-c55c62f367ff
 > **Изменено в v5:** все TQFP-100 номера, прямо указанные в **Microchip DS40002211A Figure 1-1**, теперь **VERIFIED** (см. §B п.8). Ниже остаются только позиции, не подтверждённые ни Figure 1-1, ни прозвоном.
 
 - **Физическая топология входа Z− на плате V1.1** (подтяжка, транзистор, NPN/фоторезистор, источник) — без схемы не определить; известно лишь, что пад Z-S физически ведёт на pin 46 (PD3/D18).
-- **Фактическая распиновка/маркировка площадки X− и Y− на V1.1** — пад X− **не распаян** (не утверждаем «X− = X_MIN»); пад Y− не измерен. Номера TQFP для PE4=pin 6 / PJ1=pin 64 **VERIFIED по Figure 1-1**, но **физический провод на плате** не подтверждён прозвоном.
+- **Фактическая распиновка/маркировка площадки X− и Y− на V1.1** — **X− = D3 (подтверждено пользователем)**; пад Y− не измерен. Номера TQFP для PE5=pin 7 / PJ1=pin 64 **VERIFIED по Figure 1-1**.
 - **FUSE / LOCK / BOOTLOADER** — по §1–§5 (не менялись, только чтение).
 - **Единственные TQFP-100 номера, подтверждённые ВАШИМ прозвоном** (~1 Ω): **pin 7 = PE5 (D3)**, **pin 46 = PD3 (D18)**, **pin 20 = PB1**. Все остальные TQFP-номера **VERIFIED по Figure 1-1** (не прозванивались).
 
 ## D. 🧪 REQUIRED MULTIMETER TESTS (v5 — только существенные, без дубликатов)
 
-> **Уже подтверждено прозвоном (НЕ повторяем):** Z-S → TQFP pin 46 (~1 Ω), J1-S → TQFP pin 7 (~1 Ω), PB1 → TQFP pin 20.
+> **Уже подтверждено прозвоном (НЕ повторяем):** Z-S → TQFP pin 46 (~1 Ω), D3-side → TQFP pin 7 (~1 Ω; **X− концевик**), PB1 → TQFP pin 20.
 > **Запрещено:** осциллограф, логический анализатор, прозвонка VCC/GND в режиме Ω.
 > **Принцип (v5):** не создаём новых несущественных тестов. Pин-аут BLTouch **уже закрыт** (pin 7/46 VERIFIED + прозвон). Остаются **только два** действительно полезных физических теста — питание разъёма (VCC/GND). Остальные (T4/T5) **убраны** как не относящиеся к BLTouch; T1 (исключение D19) — опциональный, низкий приоритет.
 
@@ -541,27 +541,31 @@ UUID:cede2a2f-41a2-4748-9b12-c55c62f367ff
 | **T1** | GND разъёма BLTouch (DCV, НЕ в режиме Ω) | **ON** (MCU питается) | DCV (постоянное напряжение) | COM (GND) разъёма BLTouch | Общий GND на плате (или COM другого разъёма) | 0.00 ± 0.05 В | Земля разъёма BLTouch исправна. Если ≠ 0 В — проблема контакта/питания, **не** пин-аут. |
 | **T2** | VCC разъёма BLTouch (DCV) | **ON** (MCU питается) | DCV (постоянное напряжение) | VCC (5V) разъёма BLTouch | COM (GND) разъёма BLTouch | 5.00 ± 0.1 В | Питание BLTouch исправно. Если VCC ≠ 5 В — отдельная проблема питания, **не** пин-аут. |
 
-> **Опционально (низкий приоритет, только если понадобится):** исключить «Z-S → TQFP pin 45» (D19/PD2, `Z_MAX_PIN=19`, disabled) — прозвонка Z-S→pin 45 ожидается ∞; подтверждает, что сигнал идёт только на pin 46 (D18).
+> **Опционально (низкий приоритет, только если понадобится):** исключить «Z-S → TQFP pin 47» (D19/**PD4**, `Z_MAX_PIN=19`, disabled; ранее ошибочно указано PD2/pin 45) — прозвонка Z-S→pin 47 ожидается ∞; подтверждает, что сигнал идёт только на pin 46 (D18).
 > **Убрано из v4 (несущественно для BLTouch):** T4 (X_MIN физика, пад не распаян) · T5 (Y_MIN, не задействован). Нумерация TQFP для PE4=pin 6 / PJ1=pin 64 уже **VERIFIED по Figure 1-1**.
 
 ## E. FINAL BLTOUCH SIGNAL PATH (на V1.1)
 
 ```
-CONTROL (управление серво BLTouch):
-  Marlin SERVO0_PIN = 3
-    → Arduino D3
-    → AVR port PE5
-    → TQFP-100 physical pin 7
-    → Pads/connector J1-S  (прод. ~1 Ω — VERIFIED)
-    → BLTouch (SRL / SERVO)
+CONTROL (управление BLTouch) — REAL WIRE (USER-CONFIRMED 2026-09-21):
+  Marlin SERVO0_PIN = 19 (D19)
+    → AVR port PD4  (TWI_SDA)
+    → TQFP-100 physical pin 47
+    → разъём Z+ (жёлтый провод = servo signal)
+  При Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN часть команд BLTouch (S10/S90/S160...)
+  дополнительно эмулируется на сигнальной линии D18 → разъём Z−
+  (белый провод = trigger)
 
-SIGNAL (триггер BLTouch):
+SIGNAL (триггер + эмуляция команд BLTouch):
   Marlin Z_MIN_PIN = 18
     → Arduino D18
     → AVR port PD3  (USART1_TX)
     → TQFP-100 physical pin 46
     → Pads/connector Z-S  (прод. ~1 Ω — VERIFIED)
     → BLTouch (SIG)
+
+X− endstop:  Marlin X_MIN_PIN = 3 → D3 → PE5 → TQFP pin 7 → разъём X−
+X+ runout:   Marlin FIL_RUNOUT_PIN = 4 → D4 → PG5 → TQFP pin 1 → разъём X+
 ```
 
 Оба направления: **Marlin-side VERIFIED + physical-side VERIFIED (вашим прозвоном)**. Конфликтов между прошивкой и разводкой V1.1 **не обнаружено**.

@@ -517,7 +517,7 @@
  * heater. If your configuration is significantly different than this and you don't understand
  * the issues involved, don't use bed PID until someone else verifies that your hardware works.
  */
-//#define PIDTEMPBED
+#define PIDTEMPBED
 
 //#define BED_LIMIT_SWITCHING
 
@@ -617,9 +617,12 @@
 #define USE_ZMIN_PLUG
 //#define USE_XMAX_PLUG
 
-// JGMaker Magic V1.1: X-S endstop is physically wired to D2 (PE4), not D3 as in standard RAMPS.
-// Override the pins_RAMPS.h default (X_MIN_PIN=3) before it is included.
-#define X_MIN_PIN 2
+// JG Maker Magic V1.1 - DEFINITIVE X- endstop pin (user-confirmed 2026-09-21,
+//   multimeter-verified 2026-09-22): X- endstop signal = PE5 = D3 = TQFP pin 7.
+#define X_MIN_PIN 3
+
+// JGMaker Magic V1.1: filament runout sensor is wired to the X+ connector (D4).
+#define FIL_RUNOUT_PIN 4
 
 //#define USE_YMAX_PLUG
 //#define USE_ZMAX_PLUG
@@ -887,9 +890,11 @@
 #define Z_PROBE_SERVO_NR 0       // Defaults to SERVO 0 connector. Default: commented out - CNorton
 #define Z_SERVO_ANGLES { 10, 90 } // Z Servo Deploy and Stow angles Default: commented out - CNorton
 
-// JGMaker Magic V1.1: J1-S (BLTouch servo signal) is physically wired to D3 (PE5).
-// Override the pins_RAMPS.h default (SERVO0_PIN=15/Y+) before it is included.
-#define SERVO0_PIN 3
+// JG Maker Magic V1.1 - DEFINITIVE BLTouch wiring (user-confirmed 2026-09-21):
+//   Z- connector: BLACK = GND, WHITE = trigger signal -> D18 = Z_MIN_PIN 18
+//   Z+ connector: SERVO signal (yellow) -> D19, green/red = GND/5V
+//   SERVO0_PIN must be 19 (Z+ connector signal pin).
+#define SERVO0_PIN 19
 
 /**
  * The BLTouch probe uses a Hall effect sensor and emulates a servo.
@@ -1019,7 +1024,7 @@
 #define Z_PROBE_OFFSET_RANGE_MAX 20
 
 // Enable the M48 repeatability test to test probe accuracy
-//#define Z_MIN_PROBE_REPEATABILITY_TEST
+#define Z_MIN_PROBE_REPEATABILITY_TEST
 
 // Before deploy/stow pause for user confirmation
 //#define PAUSE_BEFORE_DEPLOY_STOW
@@ -1038,8 +1043,8 @@
 #if ENABLED(PROBING_HEATERS_OFF)
   //#define WAIT_FOR_BED_HEATER     // Wait for bed to heat back up between probes (to improve accuracy)
 #endif
-//#define PROBING_FANS_OFF          // Turn fans off when probing
-//#define PROBING_STEPPERS_OFF      // Turn steppers off (unless needed to hold position) when probing
+#define PROBING_FANS_OFF          // Turn fans off when probing
+#define PROBING_STEPPERS_OFF      // Turn steppers off (unless needed to hold position) when probing
 //#define DELAY_BEFORE_PROBING 200  // (ms) To prevent vibrations from triggering piezo sensors
 
 // For Inverting Stepper Enable Pins (Active Low) use 0, Non Inverting (Active High) use 1
@@ -1084,14 +1089,14 @@
 
 // @section homing
 
-//#define NO_MOTION_BEFORE_HOMING // Inhibit movement until all axes have been homed
+//#define NO_MOTION_BEFORE_HOMING // Inhibit movement until all axes have been homed  // TEMP OFF 2026-09-21: X-min endstop stuck TRIGGERED => G28 X kills printer
 
 //#define UNKNOWN_Z_NO_RAISE      // Don't raise Z (lower the bed) if Z is "unknown." For beds that fall when Z is powered off.
 
-//#define Z_HOMING_HEIGHT  4      // (mm) Minimal Z height before homing (G28) for Z clearance above the bed, clamps, ...
+#define Z_HOMING_HEIGHT  4      // (mm) Minimal Z height before homing (G28) for Z clearance above the bed, clamps, ...
                                   // Be sure to have this much clearance over your Z_MAX_POS to prevent grinding.
 
-//#define Z_AFTER_HOMING  10      // (mm) Height to move to after homing Z
+#define Z_AFTER_HOMING  10      // (mm) Height to move to after homing Z
 
 // Direction of endstops when homing; 1=MAX, -1=MIN
 // :[-1,1]
@@ -1153,7 +1158,7 @@
 #define FILAMENT_RUNOUT_SENSOR  // Default: commented out - CNorton
 #if ENABLED(FILAMENT_RUNOUT_SENSOR)
   #define NUM_RUNOUT_SENSORS   1     // Number of sensors, up to one per extruder. Define a FIL_RUNOUT#_PIN for each.
-  #define FIL_RUNOUT_INVERTING false // Set to true to invert the logic of the sensor.
+  #define FIL_RUNOUT_INVERTING true // Set to true to invert the logic of the sensor.
   #define FIL_RUNOUT_PULLUP          // Use internal pullup for filament runout pins.
   //#define FIL_RUNOUT_PULLDOWN      // Use internal pulldown for filament runout pins.
 
@@ -1164,7 +1169,7 @@
   // After a runout is detected, continue printing this length of filament
   // before executing the runout script. Useful for a sensor at the end of
   // a feed tube. Requires 4 bytes SRAM per sensor, plus 4 bytes overhead.
-  //#define FILAMENT_RUNOUT_DISTANCE_MM 25
+  #define FILAMENT_RUNOUT_DISTANCE_MM 25
 
   #ifdef FILAMENT_RUNOUT_DISTANCE_MM
     // Enable this option to use an encoder disc that toggles the runout pin

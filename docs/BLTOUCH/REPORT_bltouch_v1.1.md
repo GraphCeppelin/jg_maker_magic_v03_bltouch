@@ -13,8 +13,8 @@
 | 1 | `src/inc/MarlinConfigPre.h:35` | `#include "../../Configuration.h"` — **наш Configuration.h включается ПЕРВЫМ** |
 | 2 | `src/inc/MarlinConfig.h` | → `pins/pins.h` → `Conditionals_post.h` → `SanityCheck.h` |
 | 3 | `src/pins/pins.h:71` | Для `MOTHERBOARD=1020` → `#include "ramps/pins_RAMPS.h"` |
-| 4 | `src/pins/ramps/pins_RAMPS.h:66-71` | `#ifndef SERVO0_PIN` → `15` (RAMPS_14) — **не сработает, т.к. мы уже define'нули 3** |
-| 5 | `src/pins/ramps/pins_RAMPS.h:96-98` | `#ifndef X_MIN_PIN` → `3` — **не сработает, т.к. мы уже define'нули 2** |
+| 4 | `Marlin/Configuration.h` | **явный `#define SERVO0_PIN 19`** (D19, разъём Z+, жёлтый servo-провод) — override вступает в силу ДО `pins_RAMPS.h` (USER-CONFIRMED 2026-09-21; «virtual/15» **ОТЗЫВАЕТСЯ**) |
+| 5 | `src/pins/ramps/pins_RAMPS.h:96-98` | `#ifndef X_MIN_PIN` → `3` — **действует** (override `X_MIN_PIN 2` удалён — X− = D3) |
 | 6 | `src/pins/ramps/pins_RAMPS.h:106` | `#ifndef Z_MIN_PIN` → `18` — **сработает** (мы не override'им) |
 | 7 | `src/inc/Conditionals_LCD.h:534-540` | BLTOUCH: **принудительно** `Z_MIN_ENDSTOP_INVERTING false` + `Z_MIN_PROBE_ENDSTOP_INVERTING false` |
 
@@ -26,8 +26,8 @@
 | `BLTOUCH` | ✅ | `Configuration.h:888` |
 | `Z_PROBE_SERVO_NR` | `0` | `Configuration.h:882` |
 | `Z_SERVO_ANGLES` | `{10, 90}` | `Configuration.h:891` |
-| `SERVO0_PIN` | **3** (D3/PE5) | `Configuration.h:892` (override `pins_RAMPS.h:70`=15) |
-| `X_MIN_PIN` | **2** (D2/PE4) | `Configuration.h:622` (override `pins_RAMPS.h:97`=3) |
+| `SERVO0_PIN` | **19** (D19/PD4/pin 47, разъём Z+) | `Configuration.h` override — **REAL WIRE (жёлтый)** (BLTouch servo) |
+| `X_MIN_PIN` | **3** (D3/PE5) | `pins_RAMPS.h` default (override `X_MIN_PIN 2` **removed**) |
 | `Z_MIN_PIN` | **18** (D18/PD3) | `pins_RAMPS.h:106` (default, совпал с измерением) |
 | `Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN` | ✅ | `Configuration.h:832` |
 | `Z_MIN_ENDSTOP_INVERTING` | `true` в `Configuration.h:657` → **`false`** после `Conditionals_LCD.h:539` | — |
@@ -110,11 +110,13 @@
 
 | Сигнал | TQFP pin | Порт.пин | Pin Arduino | Назначение |
 |---|---|---|---|---|
-| J1-S | 7 | PE5 | **D3** | BLTouch SERVO |
 | Z-S | 46 | PD3 | **D18** | BLTouch PROBE (= Z-min) |
-| X-S | 6 | PE4 | **D2** | X endstop |
+| X-S | 7 | PE5 | **D3** | X endstop (X−) |
+| X+ | 1 | PG5 | **D4** | filament runout |
 | J1-V / Z-V | — | — | +5V | питание |
 | J1-G / Z-G | — | — | GND | масса |
+
+> **ОТЗЫВАЕТСЯ** (2026-09-21): старая запись «J1-S → D3 = BLTouch SERVO» **неверна** — D3 это концевик **X−** (подтверждено пользователем: BLTouch = разъёмы Z−/Z+, X− = xmin, X+ = filament). «Серво-команды» BLTouch эмулируются на линии D18 (`Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN`), физический провод серво **нет**.
 
 Конфликтов нет. Не пересматривается.
 
@@ -153,12 +155,12 @@
 #define Z_SAFE_HOMING                         // 1360
 #define NOZZLE_TO_PROBE_OFFSET { 46, 14, 0 }  // 960
 
-// Configuration.h (наши 2 добавления):
-#define X_MIN_PIN 2        // 622
-#define SERVO0_PIN 3       // 892
-
-// pins_RAMPS.h (default, не тронут):
-#define Z_MIN_PIN 18       // pins_RAMPS.h:106
+// pins_RAMPS.h (default, действуют):
+#define Z_MIN_PIN 18       // pins_RAMPS.h:106 (D18, Z− разъём, белый триггер)
+#define X_MIN_PIN 3        // pins_RAMPS.h default (явный define в Configuration.h, D3)
+// Configuration.h (наши overrides):
+#define SERVO0_PIN 19      // D19, Z+ разъём, жёлтый servo-провод (USER-CONFIRMED 2026-09-21)
+#define FIL_RUNOUT_PIN 4   // X+ порт → D4
 ```
 
 **Ничего не нужно добавлять или менять.**
@@ -169,13 +171,15 @@
 
 | Pin | Назначение | Кто использует в прошивке | Конфликт |
 |---|---|---|---|
-| **D2** | X endstop | `X_MIN_PIN` (`Configuration.h:622`) | ❌ Нет |
-| **D3** | BLTouch SERVO | `SERVO0_PIN` (`Configuration.h:892`) | ❌ Нет |
-| **D18** | BLTouch PROBE | `Z_MIN_PIN` (`pins_RAMPS.h:106`) | ❌ Нет |
+| **D3** | X− endstop | `X_MIN_PIN` (явный define, = default RAMPS) | ❌ Нет |
+| **D4** | filament runout | `FIL_RUNOUT_PIN` (`Configuration.h`) | ❌ Нет |
+| **D19** | BLTouch SERVO (жёлтый) | `SERVO0_PIN` (override 19) | ❌ Нет |
+| **D18** | BLTouch TRIGGER (белый) | `Z_MIN_PIN` (`pins_RAMPS.h:106`) | ❌ Нет |
 
 **Проверка по `pins_RAMPS.h` (полный список):**
-- D2 — не встречается в ни одном `#define` ✅
-- D3 — не встречается (кроме default `SERVO0_PIN 15`, который мы override'нули) ✅
+- D3 — `X_MIN_PIN`, совпадает с X− пользователем ✅
+- D4 — `X_MAX_PIN` (не используется) / `FIL_RUNOUT_PIN` ✅
+- D19 — `SERVO0_PIN` (override 19, жёлтый servo-провод) ✅
 - D18 — только `Z_MIN_PIN` ✅
 - `BEEPER_PIN` = 37 (`pins_RAMPS.h:461`) — не конфликтует ✅
 
@@ -206,11 +210,12 @@
 cd /mnt/f/git/jg_maker_magic_v03_bltouch/Marlin && rm -rf applet && make -j4 ARDUINO_INSTALL_DIR=/home/vivakalman/Arduino HARDWARE_MOTHERBOARD=1020
 ```
 
-**Результат:**
+**Результат (финальный build, 2026-09-21):**
 ```
-Program: 177206 bytes (67.6% Full)
-Data:      6681 bytes (81.6% Full)
+Program: 184252 bytes (70.3% Full)
+Data:      6762 bytes (82.5% Full)
 ```
+(исторический build от 2026-09-18: 177206 / 6681)
 
 **Файлы:**
 - `F:\git\jg_maker_magic_v03_bltouch\Marlin\applet\Marlin.hex` (498 KB)
@@ -287,11 +292,11 @@ avrdude -c arduino -p atmega2560 -b 115200 -P /dev/ttyACM0 -U flash:w:/mnt/f/git
 
 | Файл | Статус | Изменение |
 |---|---|---|
-| `Marlin/Configuration.h` | **изменён** | +`X_MIN_PIN 2` (стр. 622), +`SERVO0_PIN 3` (стр. 892) |
+| `Marlin/Configuration.h` | **изменён (2026-09-21)** | удалён override `X_MIN_PIN 2` (теперь D3); **`SERVO0_PIN 19` явный override (D19, REAL WIRE, разъём Z+ — жёлтый)**; добавлен `FIL_RUNOUT_PIN 4` (D4); `FIL_RUNOUT_INVERTING true`; `X_MIN_ENDSTOP_INVERTING true` |
 | `Marlin/src/libs/Tone.cpp` | **новый** | копия из Arduino core 1.8.3 (untracked) |
 | `REPORT_bltouch_v1.1.md` | **новый** | этот отчёт |
 
 **Не тронуты:** Makefile, `pins_RAMPS.h`, `bltouch.cpp`, `endstops.cpp`, E-steps, thermistor, PID, bed size, `NOZZLE_TO_PROBE_OFFSET`, экструзия.
 
 **Commit: НЕ выполнялся.**
-**Прошивка: НЕ выполнялась.**
+**Прошивка: ВЫПОЛНЕНА (2026-09-21)** — 184252 bytes прошиты на COM4, verified (SHA-256 `433E101CD54B29FEDDEAA79F39607BC0096AA8AAF5B0944F9A5E66A2BB9FD38B`; включает INVERT_X_DIR=true — см. `docs/FLASHING/FLASH_REPORT.md`).

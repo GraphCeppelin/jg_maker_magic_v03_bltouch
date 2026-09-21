@@ -1,6 +1,9 @@
 # FINAL JG MAKER MAGIC V1.1 + BLTOUCH REPORT
 
 > **STAGE:** ФИНАЛЬНЫЙ ИНТЕГРАЦИОННЫЙ ЭТАП — preparation complete, **NO FLASH PERFORMED**.
+>
+> **⚠️ ИСПРАВЛЕНО (2026-09-21):** финальная pin map: X−=**D3/PE5/pin 7**, SERVO0=**19** (D19, Z+ разъём, жёлтый провод — НЕ virtual), FIL_RUNOUT_PIN=4,
+> FIL_RUNOUT_INVERTING=true) была собрана (**184252 bytes, HEX 0x00000–0x2CFBB, SHA-256 `433E101CD54B29FEDDEAA79F39607BC0096AA8AAF5B0944F9A5E66A2BB9FD38B` (v. от 2026-09-21, включает INVERT_X_DIR=true)**) и **ПРОШИТА на COM4 (verified, 2026-09-21)**. BLTouch-часть отчёта (D18 signal, Z−/Z+ разъёмы) остаётся верной.
 > **WRITE OPERATIONS TO MCU: 0**
 > **Scope:** read-only analysis + compile-only build + HEX inspection + SHA-256. No `make upload`, no `avrdude` write, no fuse/lock/EEPROM/bootloader write.
 
@@ -87,13 +90,13 @@
 
 | Signal | Marlin define | Arduino | AVR port | TQFP-100 | Board contact | State |
 |---|---|---|---|---|---|---|
-| X endstop MIN | `X_MIN_PIN = 2` | D2 | PE4 | pin 6 | X− | active |
-| X endstop MAX | `X_MAX_PIN = 4` | D4 | PG5 | pin 1 | — | active |
+| X endstop MIN | `X_MIN_PIN = 3` | D3 | PE5 | pin 7 | X− | **USER-CONFIRMED definitive map (2026-09-21)**: X− port = D3 (RAMPS default; the `X_MIN_PIN 2` override was removed). D2 was never wired — the old «X− = D2» claim is **RETRACTED**. |
+| X endstop MAX (runout) | `FIL_RUNOUT_PIN = 4` (X_MAX_PIN=4) | D4 | PE6 | pin 8 | X+ | **filament runout sensor (USER-CONFIRMED 2026-09-21)** |
 | Y endstop MIN | `Y_MIN_PIN = 14` | D14 | PJ1 | pin 64 | Y− | active |
 | Y endstop MAX | `Y_MAX_PIN = −1` | — | — | — | — | disabled (no USE_YMAX_PLUG) |
-| Z endstop MIN | `Z_MIN_PIN = 18` | D18 | PD3 (USART1_TX) | pin 46 | **Z-S** | **BLTouch SIGNAL** |
-| Z endstop MAX | `Z_MAX_PIN = 19` | D19 | PD2 (USART1_RX) | pin 45 | — | disabled (no USE_ZMAX_PLUG) |
-| SERVO 0 (BLTouch) | `SERVO0_PIN = 3` | D3 | PE5 | pin 7 | **J1-S** | **BLTouch CONTROL** |
+| Z endstop MIN | `Z_MIN_PIN = 18` | D18 | PD3 | pin 46 | **Z− S (белый)** | **BLTouch TRIGGER (USER-CONFIRMED)** |
+| Z endstop MAX | `Z_MAX_PIN = 19` | D19 | PD4 | pin 47 | **Z+ S (жёлтый)** | **BLTouch SERVO line** — no longer «disabled»: wired with yellow servo wire |
+| SERVO 0 (BLTouch) | `SERVO0_PIN = 19` | D19 | PD4 | pin 47 | **Z+ port** | **REAL WIRE (жёлтый, USER-CONFIRMED 2026-09-21)**. Старое «VIRTUAL/SERVO0=15» — **ОТЗЫВАЕТСЯ**. |
 | SERVO 1 | `SERVO1_PIN = 6` | D6 | PH3 | pin 15 | — | disabled (NUM_SERVOS=1) |
 | (ref) D52 | — | D52 | PB1 | pin 20 | — | probe ref (multimeter ~1 Ω) |
 | XTAL2 / XTAL1 | — | — | PB4 / PB3 | pin 33 / pin 34 | — | crystal |
@@ -103,14 +106,16 @@
 ```
 D2  = PE4 = TQFP pin 6
 D3  = PE5 = TQFP pin 7
-D4  = PG5 = TQFP pin 1
+D4  = PE6 = TQFP pin 8
 D5  = PE3 = TQFP pin 5
 D6  = PH3 = TQFP pin 15
 D14 = PJ1 = TQFP pin 64
 D18 = PD3 = TQFP pin 46
-D19 = PD2 = TQFP pin 45
+D19 = PD4 = TQFP pin 47
 ```
-Plus: `PB1 = pin 20`, `PD4 = pin 47`, `XTAL2/PB4 = pin 33`, `XTAL1/PB3 = pin 34`.
+Plus: `PB1 = pin 20`, `XTAL2/PB4 = pin 33`, `XTAL1/PB3 = pin 34`.
+
+> ⚠️ **ИСПРАВЛЕНИЕ 2026-09-21:** ранее в этом файле ошибочно указано `D4=PG5/pin 1`, `D19=PD2/pin 45`. Правильно (по `pins_arduino.h` mega): **D4 = PE6 = pin 8**, **D19 = PD4 = pin 47**.
 
 ---
 
@@ -124,7 +129,7 @@ Plus: `PB1 = pin 20`, `PD4 = pin 47`, `XTAL2/PB4 = pin 33`, `XTAL1/PB3 = pin 34`
 |---|---|---|
 | J1-G | 0 Ω | negative terminal of large electrolytic → **GND** |
 | J1-V | 0 Ω | positive terminal of large electrolytic → **+5 V** |
-| J1-S | ~1 Ω | → **TQFP pin 7 → PE5 → D3 → SERVO0_PIN** |
+| J1-S | ~1 Ω | → TQFP pin 7 → PE5 → **D3 = X− endstop line (X_MIN_PIN 3)** — NOT BLTouch control (old «J1-S = SERVO» interpretation: **RETRACTED**) |
 | J1-V − J1-G (powered) | **5.0 V** | rail present |
 
 **Z connector (probe/signal side):**
@@ -146,21 +151,20 @@ Plus: `PB1 = pin 20`, `PD4 = pin 47`, `XTAL2/PB4 = pin 33`, `XTAL1/PB3 = pin 34`
 ## 7. Final BLTouch wiring
 
 ```
-BLTouch CONTROL          → J1-S  → D3   → PE5 → TQFP 7   → Marlin SERVO0_PIN
-BLTouch VCC              → J1-V  → +5 V (board rail)
-BLTouch GND #1 (servo)   → J1-G  → GND  (board rail)
-BLTouch SIGNAL           → Z-S   → D18  → PD3 → TQFP 46  → Marlin Z_MIN_PIN
-BLTouch GND #2 (signal)  → Z-G   → GND  (board rail)
-Z-V                      → +5 V board rail; UNUSED FOR BLTOUCH
+BLTouch SERVO (управление)  → разъём Z+ → D19 → PD4 → TQFP 47 → Marlin SERVO0_PIN (=19)
+BLTouch VCC (+5V, красный)  → разъём Z+ → +5V (board rail)
+BLTouch GND (зелёный)       → разъём Z+ → GND (board rail)
+BLTouch TRIGGER (белый)     → разъём Z− → Z-S → D18 → PD3 → TQFP 46 → Marlin Z_MIN_PIN (=18)
+BLTouch GND (чёрный)        → разъём Z− → GND (board rail)
 ```
 
 **Standard 5 functional wires (no colour names — FUNCTION → BOARD CONTACT only):**
 
 | # | Function | Board contact |
 |---|---|---|
-| 1 | CONTROL (servo signal) | J1-S |
-| 2 | VCC (+5 V) | J1-V |
-| 3 | GND (servo/power) | J1-G |
+| 1 | CONTROL (servo, жёлтый) | **D19** — разъём Z+ (`SERVO0_PIN 19`) |
+| 2 | VCC (+5 V) | Z-port power line |
+| 3 | GND (power) | Z-port GND line |
 | 4 | SIGNAL (probe input) | Z-S |
 | 5 | GND (probe/signal) | Z-G |
 
@@ -168,7 +172,7 @@ Z-V                      → +5 V board rail; UNUSED FOR BLTOUCH
 
 | Group | Contacts |
 |---|---|
-| 3-wire side (servo) | **J1-V, J1-G, J1-S** |
+| 3-wire side (servo) | **J1-V, J1-G, J1-S** — historical J1 header; **on this board J1-S (D3) is the X− endstop**, servo commands are emulated on Z-S (D18) |
 | 2-wire side (probe) | **Z-S, Z-G** |
 
 **FINAL PHYSICAL WIRING = VERIFIED BY BOARD MEASUREMENTS.**
@@ -178,15 +182,15 @@ Z-V                      → +5 V board rail; UNUSED FOR BLTOUCH
 - There is **no electrical reason** Z-G cannot serve as the probe/signal-side GND. The probe signal (Z-S, D18/PD3) returns through Z-G on the common GND rail — this is the standard differential/return pair for a BLTouch SIG/SIG-GND. **No anomaly found.**
 
 **Forbidden connections (do NOT add a wire):**
-- **DO NOT** connect J1-S to Z-S (control vs signal — different GPIOs, D3 vs D18).
+- **DO NOT** connect J1-S to Z-S — **J1-S (D3) is the X− endstop**, not the BLTouch control.
 - **DO NOT** connect J1-V to Z-V with a separate wire — already the same +5 V rail through the board.
 
 **GPIO/rail roles confirmed:**
 
 | Contact | Role |
 |---|---|
-| J1-S | GPIO / control signal (D3) |
-| Z-S | GPIO / input signal (D18) |
+| J1-S | GPIO / **X− endstop signal (D3 = X_MIN_PIN 3)** |
+| Z-S | GPIO / **BLTouch SIGNAL (D18 = Z_MIN_PIN 18)** + servo emulation |
 | J1-V | +5 V |
 | Z-V | +5 V (unused) |
 | J1-G | GND |
@@ -203,13 +207,13 @@ Z-V                      → +5 V board rail; UNUSED FOR BLTOUCH
 | `BLTOUCH` | **defined** | `Configuration.h` L897 | enabled |
 | `Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN` | **defined** | `Configuration.h` L837 | probe shares Z_MIN pin |
 | `Z_MIN_PROBE_PIN` | **`32` commented** | `Configuration.h` L855 | **not used** (see below) |
-| `SERVO0_PIN` | **3** | `Configuration.h` L892 (override of pins_RAMPS.h L71 default 15) | D3 |
+| `SERVO0_PIN` | **19** | `Configuration.h` override | **D19 — Z+ разъём, жёлтый servo-провод, REAL WIRE** (USER-CONFIRMED 2026-09-21) |
 | `SERVO1_PIN` | 6 | pins_RAMPS.h L75 | disabled (NUM_SERVOS=1) |
 | `NUM_SERVOS` | **1** | `Configuration.h` L2257 | only SERVO0 active |
 | `Z_PROBE_SERVO_NR` | **0** | `Configuration.h` L887 | uses SERVO0 |
 | `Z_MIN_PIN` | **18** | pins_RAMPS.h L105 | D18 |
 | `Z_MAX_PIN` | 19 (disabled) | pins_RAMPS.h L108 | no USE_ZMAX_PLUG |
-| `X_MIN_PIN` | 2 | `Configuration.h` L622 | D2 |
+| `X_MIN_PIN` | 3 | `pins_RAMPS.h` L92 (default; `X_MIN_PIN 2` override **removed**) | **D3 — X− port, user-confirmed** |
 | `X_MAX_PIN` | 4 | pins_RAMPS.h L92 | D4 |
 | `Y_MIN_PIN` | 14 | pins_RAMPS.h L97 | D14 |
 | `Y_MAX_PIN` | −1 (disabled) | pins_RAMPS.h L100 | no USE_YMAX_PLUG |
@@ -256,7 +260,7 @@ The configuration contains everything required and **consistent** with the measu
 - `BLTOUCH` ✓
 - `Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN` ✓
 - `Z_PROBE_SERVO_NR = 0` ✓
-- `SERVO0_PIN = 3` (D3 = J1-S) ✓
+- `SERVO0_PIN = 19` (REAL WIRE, D19 Z+ разъём, жёлтый — USER-CONFIRMED 2026-09-21; «virtual/15» **ОТЗЫВАЕТСЯ**) ✓
 - `Z_MIN_PIN = 18` (D18 = Z-S) ✓
 - `Z_MIN_ENDSTOP_INVERTING = true` (active, matches BLTouch logic) ✓
 
@@ -375,9 +379,9 @@ application HEX does NOT contain any data at/above 0x3E000   ✓
 [ ] firmware build successful            → verified (177206 / 6681)
 [ ] board = 1020                         → verified (BOARD_RAMPS_14_EFB)
 [ ] MCU = ATmega2560                     → verified (sig 0x1E 98 01)
-[ ] SERVO0 = D3                          → verified (SERVO0_PIN=3)
+[ ] SERVO0 = D19 (REAL WIRE)            → SERVO0_PIN=19, жёлтый провод в разъёме Z+ (старое «D15 virtual» — ОТЗЫВАЕТСЯ)
 [ ] Z_MIN  = D18                         → verified (Z_MIN_PIN=18)
-[ ] J1-S  = D3                           → verified (~1 Ω → pin 7)
+[ ] X-   = D3                           → user-confirmed (X_MIN_PIN=3)
 [ ] Z-S   = D18                          → verified (~1 Ω → pin 46)
 [ ] J1-V  = 5V                           → verified (0 Ω to +5 V rail, 5.0 V)
 [ ] J1-G  = GND                          → verified (0 Ω to GND rail)
@@ -402,13 +406,13 @@ application HEX does NOT contain any data at/above 0x3E000   ✓
 
 | Function | Marlin | Arduino | AVR | TQFP | Board contact | Evidence |
 |---|---|---|---|---|---|---|
-| **SERVO0 (BLTouch CONTROL)** | `SERVO0_PIN = 3` | D3 | PE5 | pin 7 | **J1-S** | multimeter ~1 Ω → pin 7 (Fig.1-1) |
+| **SERVO0 (BLTouch)** | `SERVO0_PIN = 19` | D19 | PD4 | pin 47 | **Z+ port (жёлтый провод)** | **REAL WIRE (USER-CONFIRMED 2026-09-21)**; при `Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN` часть команд дополнительно эмулируется на D18; старое «virtual/D15» — **ОТЗЫВАЕТСЯ** |
 | **Z_MIN (BLTouch SIGNAL)** | `Z_MIN_PIN = 18` | D18 | PD3 (USART1_TX) | pin 46 | **Z-S** | multimeter ~1 Ω → pin 46 (Fig.1-1) |
 | **VCC** | board rail | — | — | — | **J1-V / Z-V** | 0 Ω to +5 V electrolytic; 5.0 V measured |
 | **GND** | board rail | — | — | — | **J1-G / Z-G** | 0 Ω to GND electrolytic (common node) |
-| X_MIN | `X_MIN_PIN = 2` | D2 | PE4 | pin 6 | X− | pins_RAMPS.h L105 / override L622 |
+| X_MIN | `X_MIN_PIN = 3` | D3 | PE5 | pin 7 | X− | **user-confirmed definitive map** (X− port = D3); old «D2» interpretation **RETRACTED** (D2 was never wired) |
 | Y_MIN | `Y_MIN_PIN = 14` | D14 | PJ1 | pin 64 | Y− | pins_RAMPS.h L97 |
-| Z_MAX | `Z_MAX_PIN = 19` (disabled) | D19 | PD2 (USART1_RX) | pin 45 | — | no USE_ZMAX_PLUG → −1 |
+| Z_MAX | `Z_MAX_PIN = 19` (disabled) | D19 | PD4 (TWI_SDA) | pin 47 | — | no USE_ZMAX_PLUG → −1 (порт занят SERVO0 — BLTouch servo, REAL WIRE) |
 | SERVO1 | `SERVO1_PIN = 6` (disabled) | D6 | PH3 | pin 15 | — | NUM_SERVOS=1 |
 | (ref) | D52 | D52 | PB1 | pin 20 | — | multimeter ~1 Ω (pin 20) |
 | XTAL2 | — | — | PB4 | pin 33 | — | Fig.1-1 |

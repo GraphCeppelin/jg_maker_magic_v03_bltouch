@@ -12,9 +12,11 @@
 
 | Item | Value |
 |---|---|
+> **PIN MAP UPDATE 2026-09-21 (SUPERSEDES all «virtual servo / SERVO0=15» claims below):** BLTouch servo = **D19** (`SERVO0_PIN 19`, Z+ connector, yellow wire); trigger = **D18** (Z− connector, white wire); X− endstop = **D3/PE5/pin 7**; runout = **D4**. See `docs/HARDWARE/PIN_MAP_DEFINITIVE.md`.
+
 | Probe type | **BLTouch** (servo-emulating, Hall-effect, smart/clone-agnostic) |
-| Probe → control signal | `BLTouch → J1-S → D3 → PE5 → TQFP pin 7 → SERVO0_PIN = 3` |
-| Probe → trigger signal | `BLTouch → Z-S → D18 → PD3 → TQFP pin 46 → Z_MIN_PIN = 18` |
+| Probe → control signal | **REAL WIRE** — `SERVO0_PIN=19` (D19, Z+ connector, yellow servo wire) |
+| Probe → trigger signal | `BLTouch → Z− connector (Z-S) → D18 → PD3 → TQFP pin 46 → Z_MIN_PIN = 18` |
 | Probe power | `J1-V = +5 V (board rail)` · `Z-G / J1-G = GND` |
 | `Z-V` | **+5 V board rail — UNUSED for the BLTouch** |
 | Active invert define | **`Z_MIN_ENDSTOP_INVERTING = true`** (the one actually read) |
@@ -33,7 +35,7 @@
 
 The BLTouch is **not** a plain servo and **not** a plain endstop switch. It is a smart probe that **emulates a PWM servo** on its control line and exposes a digital **trigger output** on its signal line.
 
-- **Control line (J1-S → D3):** Marlin drives it with `MOVE_SERVO(Z_PROBE_SERVO_NR, angle)`. The "angle" is actually a **command code** the BLTouch understands (`bltouch.h`):
+- **Control line (REAL WIRE, SERVO0_PIN=19/D19, разъём Z+, жёлтый провод — ИСПРАВЛЕНО 2026-09-21, «virtual» ОТЗЫВАЕТСЯ):** Marlin drives BLTouch commands via `MOVE_SERVO(Z_PROBE_SERVO_NR, angle)` on the D19 servo line. The "angle" is actually a **command code** the BLTouch understands (`bltouch.h`):
 
   | Command | "Angle" value sent | Meaning |
   |---|---|---|
@@ -55,21 +57,24 @@ The BLTouch is **not** a plain servo and **not** a plain endstop switch. It is a
 ## 2. Final physical wiring (VERIFIED by board measurements)
 
 ```
-BLTouch CONTROL (servo)   → J1-S  → D3   → PE5  → TQFP 7   → Marlin SERVO0_PIN (=3)
-BLTouch VCC (+5V)         → J1-V  → +5V  (board rail)
-BLTouch GND #1 (servo)    → J1-G  → GND  (board rail)
-BLTouch SIGNAL (trigger)  → Z-S   → D18  → PD3  → TQFP 46  → Marlin Z_MIN_PIN (=18)
-BLTouch GND #2 (signal)   → Z-G   → GND  (board rail)
-Z-V                       → +5 V board rail; UNUSED FOR BLTOUCH
+BLTouch SERVO (управление, жёлтый) → разъём Z+ → D19 → PD4 → TQFP 47 → Marlin SERVO0_PIN (=19)
+BLTouch VCC (+5V, красный)         → разъём Z+ → +5V  (board rail)
+BLTouch GND (зелёный)             → разъём Z+ → GND (board rail)
+BLTouch SIGNAL (триггер, белый)   → разъём Z− → Z-S → D18 → PD3 → TQFP 46 → Marlin Z_MIN_PIN (=18)
+BLTouch GND (чёрный)              → разъём Z− → GND (board rail)
 ```
+
+> **PIN MAP 2026-09-21 (SUPERSEDES «virtual servo»):** BLTouch SERVO — **реальный провод на D19** (`SERVO0_PIN 19`, разъём Z+). Ниже в тексте остались исторические блоки «VIRTUAL/SERVO0=15» — они **ОТЗЫВЫВАЮТСЯ**. Источник истины: `docs/HARDWARE/PIN_MAP_DEFINITIVE.md`.
+
+> **Definitive connector map (user-confirmed 2026-09-21):** BLTouch = **Z− + Z+ ports**; X− port = **D3 (PE5, TQFP pin 7) = X endstop**; X+ port = **D4 = filament runout**. The old «J1-S → D3 = BLTouch SERVO» interpretation is **RETRACTED**: D3 carries the X− endstop.
 
 **Standard 5 functional wires (FUNCTION → BOARD CONTACT):**
 
 | # | Function | Board contact |
 |---|---|---|
-| 1 | CONTROL (servo signal) | **J1-S** |
-| 2 | VCC (+5 V) | **J1-V** |
-| 3 | GND (servo/power) | **J1-G** |
+| 1 | CONTROL (servo, жёлтый) | **D19** — разъём Z+ (`SERVO0_PIN 19`) |
+| 2 | VCC (+5 V) | Z-port power line |
+| 3 | GND (servo/power) | Z-port GND line |
 | 4 | SIGNAL (probe input) | **Z-S** |
 | 5 | GND (probe/signal) | **Z-G** |
 
@@ -77,7 +82,7 @@ Z-V                       → +5 V board rail; UNUSED FOR BLTOUCH
 
 | Group | Contacts |
 |---|---|
-| 3-wire side (servo) | **J1-V, J1-G, J1-S** |
+| 3-wire side (servo) | **J1-V, J1-G, J1-S** — исторический разъём J1; **на этой плате J1-S (D3) занят концевиком X−**, серво-команды BLTouch эмулируются на Z-S (D18) |
 | 2-wire side (probe) | **Z-S, Z-G** |
 
 **Wire colours — official JG Maker Magic 3D Touch spec sheet (single authoritative source):**
@@ -90,7 +95,7 @@ Z-V                       → +5 V board rail; UNUSED FOR BLTOUCH
 |---|---|---|
 | **Green** | GND | **J1-G** |
 | **Red** | +5 V (VCC) | **J1-V** |
-| **Orange** | Signal (servo control) | **J1-S** |
+| **Orange** | Signal (servo control) | **J1-S** — ⚠️ на этой плате D3 занят X−; серво-команды BLTouch идут по Z-S (D18) |
 
 **2-pin connector (J4) — probe / trigger side:**
 
@@ -100,7 +105,7 @@ Z-V                       → +5 V board rail; UNUSED FOR BLTOUCH
 | **White** | Zmin (trigger signal) | **Z-S** |
 
 > **⚠️ Note:** This colour scheme (Green/Red/Orange for 3-pin) is the **JG 3D Touch** proprietary coding — it differs from a generic BLTouch (which typically uses Brown/Red/Black). Match wires to the colours above, NOT to generic BLTouch guides.
-> **Board-side mapping** (independent of wire colour) is verified by multimeter below: J1-S=D3 (servo), Z-S=D18 (signal).
+> **Board-side mapping** (independent of wire colour) is verified by multimeter below: **Z-S=D18 (signal + servo emulation)**; J1-S→D3 measured, but **D3 = X− endstop, NOT BLTouch servo** (retracted).
 
 **Board measurements (multimeter, ground truth):**
 
@@ -108,7 +113,7 @@ Z-V                       → +5 V board rail; UNUSED FOR BLTOUCH
 |---|---|---|
 | J1-G | 0 Ω | large electrolytic negative → **GND** |
 | J1-V | 0 Ω | large electrolytic positive → **+5 V** |
-| J1-S | ~1 Ω | **→ TQFP pin 7 → PE5 → D3 → SERVO0_PIN** |
+| J1-S | ~1 Ω | **→ TQFP pin 7 → PE5 → D3 = X− endstop (X_MIN_PIN 3)** — NOT BLTouch control (retracted) |
 | J1-V − J1-G (powered) | **5.0 V** | rail present |
 | Z-G | 0 Ω | electrolytic negative → **GND** |
 | Z-V | 0 Ω | electrolytic positive → **+5 V** |
@@ -121,7 +126,7 @@ Z-V                       → +5 V board rail; UNUSED FOR BLTOUCH
 - `Z-V` is a **+5 V board rail, UNUSED for the BLTouch** (the probe uses `J1-V` for power).
 
 **Forbidden connections (do NOT add a wire):**
-- **DO NOT** connect **J1-S to Z-S** (control vs signal — different GPIOs, D3 vs D18).
+- **DO NOT** connect **J1-S to Z-S** — **J1-S (D3) is the X− endstop**, not the BLTouch control.
 - **DO NOT** connect **J1-V to Z-V** with a separate wire (already the same +5 V rail).
 
 > **FINAL PHYSICAL WIRING = VERIFIED BY BOARD MEASUREMENTS.**
@@ -155,7 +160,7 @@ Z-V                       → +5 V board rail; UNUSED FOR BLTOUCH
 |---|---|---|
 | **Green** | GND | J1-G |
 | **Red** | +5 V (VCC) | J1-V |
-| **Orange** | Signal (servo control) | J1-S |
+| **Orange** | Signal (servo control) | J1-S ⚠️ (D3 = X− endstop on this board; servo emulated on Z-S) |
 
 **2-pin connector (J4) — probe / trigger side:**
 
@@ -165,7 +170,7 @@ Z-V                       → +5 V board rail; UNUSED FOR BLTOUCH
 | **White** | Zmin (trigger signal) | Z-S |
 
 > **⚠️** This is the JG 3D Touch proprietary colour scheme. It is **not** the generic BLTouch scheme (Brown/Red/Black). Wire the **physical** probe according to the colours above.
-> **Cross-check:** the JG Marlin-settings guide notes “3pin → servo/BLTouch connector, 2pin → Zmin connector”, consistent with the multimeter-verified board mapping (J1-S=D3 servo, Z-S=D18 signal).
+> **Cross-check:** the JG Marlin-settings guide notes “3pin → servo/BLTouch connector, 2pin → Zmin connector”. On this board the measured mapping is **Z-S=D18 (signal + servo emulation)**; the J1-S→D3 probe measured ~1 Ω but **D3 carries the X− endstop** (user-confirmed) — the old «D3 = BLTouch servo» reading is retracted.
 
 ### 2a.3 Mechanical dimensions (mm)
 
@@ -196,22 +201,22 @@ Z-V                       → +5 V board rail; UNUSED FOR BLTOUCH
 
 | Signal | Marlin define | Arduino | AVR | TQFP-100 | Board contact | Role |
 |---|---|---|---|---|---|---|
-| BLTouch CONTROL | `SERVO0_PIN = 3` | **D3** | **PE5** | **pin 7** | **J1-S** | servo control |
-| BLTouch SIGNAL | `Z_MIN_PIN = 18` | **D18** | **PD3** | **pin 46** | **Z-S** | trigger input |
-| VCC | board rail | — | — | — | **J1-V** | +5 V |
-| GND | board rail | — | — | — | **J1-G / Z-G** | common GND |
+| BLTouch SERVO (управление) | `SERVO0_PIN = 19` | **D19** | **PD4** | **pin 47** | **Z+ S (жёлтый)** | **REAL WIRE** (USER-CONFIRMED 2026-09-21; «virtual/15» RETRACTED) |
+| BLTouch SIGNAL (триггер) | `Z_MIN_PIN = 18` | **D18** | **PD3** | **pin 46** | **Z− S (белый)** | trigger input |
+| VCC | board rail | — | — | — | Z-port | +5 V |
+| GND | board rail | — | — | — | Z-port | common GND |
 | (ref) probe ref | — | D52 | PB1 | pin 20 | — | multimeter ~1 Ω |
 
 **Closed, VERIFIED D# → port → TQFP (do not revisit):**
 ```
-D2  = PE4 = TQFP pin 6
-D3  = PE5 = TQFP pin 7      ← BLTouch CONTROL (J1-S)
-D4  = PG5 = TQFP pin 1
+D2  = PE4 = TQFP pin 6      (unused — was the wrong X− guess, RETRACTED)
+D3  = PE5 = TQFP pin 7      ← X− ENDSTOP (X_MIN_PIN 3)
+D4  = PG5 = TQFP pin 1      ← filament RUNOUT (FIL_RUNOUT_PIN 4)
 D5  = PE3 = TQFP pin 5
 D6  = PH3 = TQFP pin 15
 D14 = PJ1 = TQFP pin 64
+D19 = PD4 = TQFP pin 47     ← SERVO0_PIN (REAL WIRE, Z+ разъём, жёлтый) — ИСПРАВЛЕНО 2026-09-21
 D18 = PD3 = TQFP pin 46     ← BLTouch SIGNAL (Z-S)
-D19 = PD2 = TQFP pin 45
 ```
 Plus: `PB1 = pin 20`, `PD4 = pin 47`, `XTAL2/PB4 = pin 33`, `XTAL1/PB3 = pin 34`.
 
@@ -268,7 +273,7 @@ This was the key logic question and it is now resolved by tracing the preprocess
 | L855 | `//#define Z_MIN_PROBE_PIN 32` | **commented** | **Not used** (probe is on Z_MIN, not a custom pin) |
 | L887 | `Z_PROBE_SERVO_NR` | **0** | BLTouch is servo index 0 |
 | L888 | `Z_SERVO_ANGLES` | `{ 10, 90 }` | Deploy / Stow angle codes |
-| L892 | `SERVO0_PIN` | **3** | Override of pins_RAMPS default → **D3 (PE5)** |
+| L892 | `SERVO0_PIN` | **19** | `Configuration.h` override — **D19 (Z+ разъём, жёлтый servo-провод), REAL WIRE** (USER-CONFIRMED 2026-09-21) |
 | L897 | `BLTOUCH` | **(enabled)** | BLTouch driver enabled |
 | L657 | `Z_MIN_ENDSTOP_INVERTING` | **true** | **ACTIVE** trigger invert |
 | L661 | `Z_MIN_PROBE_ENDSTOP_INVERTING` | true | inert (see §4) |
@@ -366,13 +371,13 @@ Before reporting, it sends `bltouch._set_SW_mode()` (so the trigger pin reflects
 | **M851** | Set Z probe offset | constrained to `Z_PROBE_OFFSET_RANGE_MIN/MAX` (±20) |
 | **M280** | (generic servo) | N/A for BLTouch — it is command-coded, not angle-coded |
 
-> Because `SERVO0_PIN = 3` and `Z_PROBE_SERVO_NR = 0`, every `MOVE_SERVO(0, code)` in the firmware drives the **J1-S (D3/PE5)** line.
+> **ИСПРАВЛЕНО 2026-09-21:** `SERVO0_PIN = 19` (D19, **REAL WIRE** — жёлтый servo-провод в разъёме Z+). `Z_PROBE_SERVO_NR = 0`, поэтому `MOVE_SERVO(0, code)` идёт по линии D19; при `Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN` часть команд BLTouch дополнительно эмулируется на D18 (Z-S, белый провод — trigger). Старое утверждение «SERVO0=15, virtual, без провода» — **ОТЗЫВАЕТСЯ**.
 
 ---
 
 ## 8. Configuration consistency verdict
 
-- All required BLTouch defines are present and mutually consistent with the **measured hardware** (J1-S→D3, Z-S→D18).
+- All required BLTouch defines are present and mutually consistent with the **measured hardware** (BLTouch on Z−/Z+ ports; X− = D3; X+ = D4 runout).
 - The **active** invert define (`Z_MIN_ENDSTOP_INVERTING = true`) matches the BLTouch active-low trigger.
 - `NOZZLE_TO_PROBE_OFFSET { 46, 14, 0 }` is **untouched** per directive.
 - Advanced options are at safe defaults (generic/low-speed, OD mode, 500 ms delay).
@@ -408,6 +413,9 @@ Before reporting, it sends `bltouch._set_SW_mode()` (so the trigger pin reflects
 | SHA-256 (`Marlin.elf`) | `f9f3c5a554d1548a114c5b15ab66d8fa374e560686cb9ab88f306808eb0cb916` |
 
 > **Upload NOT performed. No flash / EEPROM / fuse / lock / bootloader write. WRITE OPERATIONS = 0.**
+>
+> **⚠️ УСТАРЕЛО (2026-09-21):** после этого была собрана финальная pin map (X−=D3, SERVO0=**19 (REAL WIRE, D19)**,
+> FIL_RUNOUT_PIN=4, FIL_RUNOUT_INVERTING=true). Актуальный статус прошивки — см. `docs/FLASHING/FLASH_REPORT.md` и `docs/HARDWARE/PIN_MAP_DEFINITIVE.md`.
 
 ---
 

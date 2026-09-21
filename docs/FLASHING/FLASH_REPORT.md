@@ -3,6 +3,15 @@
 **Дата**: 2026-09-18
 **Статус**: ✅ **УСПЕШНАЯ ЗАПИСЬ + VERIFY + ПОДТВЕРЖДЕНИЕ ЦЕЛОСТИ BOOTLOADER'А**
 
+> **⚠️ ИСТОРИЧЕСКИЙ ОТЧЁТ (177206-байтовый build от 2026-09-18, X_MIN_PIN=2 era).**
+> **Состояние на 2026-09-21 (вечер): актуальная сборка 183580 bytes (HEX 184040 B),
+> Финальная pin map (USER-CONFIRMED): X−=D3 (PE5/TQFP 7), SERVO0_PIN=19 (D19, Z+ разъём, жёлтый провод, REAL WIRE), FIL_RUNOUT_PIN=4, FIL_RUNOUT_INVERTING=true,
+> INVERT_X_DIR=false (сток — ПРАВИЛЬНО, X− едет влево к упору), NO_MOTION_BEFORE_HOMING выкл (для тестов).
+> Прошивка ожидала COM4 (CH340 пропал — требуется переподключение USB).
+> Источник истины: `docs/HARDWARE/PIN_MAP_DEFINITIVE.md`.**
+> Живая верификация (2026-09-21): джог X ±40 мм точный, направление X− → влево (к упору) подтверждено.
+> Подробности: `REPORT_5stage_analysis.md`, `PROJECT_REVIEW.md`, `Marlin/Configuration.h` (комментарии 2026-09-21).
+
 ---
 
 ## 1. Итог
@@ -83,10 +92,10 @@ BL  0x3E0EF:  "Arduino explorer stk500V2 by MLS"                ← родной
 
 **СТАТУС**: DISCONNECTED (как и требовалось во время прошивки).
 
-**Подключение (следующая задача)**:
-- 3-pin: Brown→J1-G(GND), Red→J1-V(+5V), Yellow→J1-S(CONTROL)
-- 2-pin: White→Z-S(SIGNAL), Black→Z-G(GND)
-- Z-V: unused
+**Подключение (актуально 2026-09-21)**:
+- BLTouch = разъёмы **Z−/Z+**: White→Z-S(SIGNAL→D18), Black→Z-G(GND); питание с шины платы
+- Серво-команды BLTouch эмулируются на D18 (`Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN`), отдельного провода серво **нет**
+- X− концевик → разъём X− (D3); filament runout → разъём X+ (D4, `FIL_RUNOUT_PIN 4`)
 
 ---
 
